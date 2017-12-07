@@ -1,79 +1,85 @@
 #pragma once
 
-#ifndef PROPERTY_OWNER
-#error "PROPERTY_OWNER not defined"
-#endif
-
-class PROPERTY_OWNER;
-
-template <class T>
-class Writable {
-public:
-	inline virtual T& operator=(const T& input) = 0;
-};
-
-template< typename T, bool lr = !std::is_fundamental<T>::value>
-class ReadOnlyProperty;
-
-
-template<class T>
-class ReadOnlyProperty<T, true> : public T
+template <typename T>
+class Property
 {
 protected:
-	inline virtual T& operator=(const T& input)
-	{
-		return (((T&)(*this)) = input);
-	}
+	T m_data;
 public:
-	inline virtual operator T() const
-	{
-		return *(T*)this;
-	}
-	friend PROPERTY_OWNER;
-};
-
-template<typename T>
-class ReadOnlyProperty<T, false>
-{
+	Property() {}
+	Property(T input) : m_data(input) {}
 protected:
-	T data;
+	inline virtual T& set(const T& input)
+	{
+		this->m_data = input;
+		return this->m_data;
+	}
+
 	inline virtual T& operator=(const T& input)
 	{
-		return (this->data = input);
+		return set(input);
 	}
-public:
-	inline virtual operator T() const
+
+	inline virtual T& get()
 	{
-		return data;
+		return this->m_data;
 	}
-	friend PROPERTY_OWNER;
+
+	inline virtual T& operator() ()
+	{
+		return get();
+	}
+
+	/*inline virtual T& operator() (const T& input)
+	{
+		return set(input);
+	}*/
+
+	inline virtual operator T&()
+	{
+		return get();
+	}	
 };
 
-template< typename T, bool lr = !std::is_fundamental<T>::value >
-class Property;
+#define property_block(type) class : public Property<type>
 
+#define property_get_set(type) public:\
+	using Property<type>::operator=;\
+	using Property<type>::operator type&;\
+	using Property<type>::operator();\
 
-template<class T>
-class Property<T, true> : public ReadOnlyProperty<T, true>, public  Writable<T>
-{
-public:
-	inline virtual T& operator=(const T& input)
-	{
-		return (((T&)(*this)) = input);
-	}
+#define property_set(type) public:\
+using Property<type>::operator=; \
 
-	inline virtual operator T&() const
-	{
-		return *((T*)this);
-	}
-};
+#define property_get(type) public:\
+	using Property<type>::operator type&;\
+	using Property<type>::operator();\
 
-template<class T>
-class Property<T, false> : public ReadOnlyProperty<T, false>, public  Writable<T>
-{
-public:
-	inline virtual T& operator=(const T& input)
-	{
-		return (this->data = input);
-	}
-};
+#define write_in_class(type1,type) friend type; protected: 	using Property<type1>::operator=;
+
+#define set_override(type) public:\
+	using Property<type>::operator=;\
+	type& set(const type& input)
+
+#define get_override(type) public:\
+	using Property<type>::operator type&;\
+	using Property<type>::operator();\
+	type& get()
+
+#define property(type, type1) class : public Property<type>\
+{\
+public:\
+	using Property<type>::operator=;\
+	using Property<type>::operator type&;\
+	using Property<type>::operator();\
+}
+
+#define readonly_property(type, type1) class : public Property<type>\
+{\
+protected:\
+	using Property<type>::operator=;\
+public:\
+	friend type1;\
+	using Property<type>::operator type&;\
+	using Property<type>::operator();\
+}
