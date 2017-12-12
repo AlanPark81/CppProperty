@@ -44,11 +44,11 @@ public:
     friend T1;
 };
 
-#define get(T) (Getter<T>)[](T& value)->T&
-#define set(T) (Setter<T>)[](const T& value)->T
+#define get(T) (Getter<T>)[this](T& value)->T&
+#define set(T) (Setter<T>)[this](const T& value)->T
 
-#define default_get(T) (Getter<T>)[](T& value)->T& {return value;}
-#define default_set(T) (Setter<T>)[](const T& value)->T {return value;}
+#define default_get(T) (Getter<T>)[this](T& value)->T& {return value;}
+#define default_set(T) (Setter<T>)[this](const T& value)->T {return value;}
 
 #define property(T1, T2, V) Property<T1, T2> V=Property<T1, T2>
 

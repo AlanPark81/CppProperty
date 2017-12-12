@@ -7,15 +7,20 @@ using namespace std;
 
 class ExampleClass
 {
+    int m_nTest;
 public:
     property(string, ExampleClass, m_strA)
     (
             get(string)
                     {
+                        m_nTest=1;
+                        cout<<"m_nTest:"<<m_nTest<<endl;
                         return value;
                     }
             ,set(string)
                     {
+                        m_nTest=0;
+                        cout<<"m_nTest:"<<m_nTest<<endl;
                         return value;
                     }
     );
