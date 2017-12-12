@@ -1,85 +1,54 @@
 #pragma once
+#include<functional>
 
-template <typename T>
+using namespace std;
+
+template<typename T>
+using Getter=std::function<T&(T&)>;
+
+template<typename T>
+using Setter=std::function<T(const T&)>;
+
+
+template <typename T, typename T1>
 class Property
 {
 protected:
 	T m_data;
-public:
-	Property() {}
-	Property(T input) : m_data(input) {}
-protected:
-	inline virtual T& set(const T& input)
-	{
-		this->m_data = input;
-		return this->m_data;
-	}
+	const Getter<T> get;
+    const Setter<T> set;
+    inline virtual T& operator() (const T& input)
+    {
+        if(set)
+            return m_data=set(input);
+        else
+            return m_data=input;
+    }
 
+public:
+    Property(Getter<T> getInput=Getter<T>(), Setter<T> setInput=Setter<T>()) : get(getInput), set(setInput){}
 	inline virtual T& operator=(const T& input)
 	{
-		return set(input);
-	}
-
-	inline virtual T& get()
-	{
-		return this->m_data;
+		return m_data=set(input);
 	}
 
 	inline virtual T& operator() ()
 	{
-		return get();
+		return get(m_data);
 	}
-
-	/*inline virtual T& operator() (const T& input)
-	{
-		return set(input);
-	}*/
 
 	inline virtual operator T&()
 	{
-		return get();
-	}	
+		return get(m_data);
+	}
+    friend T1;
 };
 
-#define property_block(type) class : public Property<type>
+#define get(T) (Getter<T>)[](T& value)->T&
+#define set(T) (Setter<T>)[](const T& value)->T
 
-#define property_get_set(type) public:\
-	using Property<type>::operator=;\
-	using Property<type>::operator type&;\
-	using Property<type>::operator();\
+#define default_get(T) (Getter<T>)[](T& value)->T& {return value;}
+#define default_set(T) (Setter<T>)[](const T& value)->T {return value;}
 
-#define property_set(type) public:\
-using Property<type>::operator=; \
+#define property(T1, T2, V) Property<T1, T2> V=Property<T1, T2>
 
-#define property_get(type) public:\
-	using Property<type>::operator type&;\
-	using Property<type>::operator();\
-
-#define write_in_class(type1,type) friend type; protected: 	using Property<type1>::operator=;
-
-#define set_override(type) public:\
-	using Property<type>::operator=;\
-	type& set(const type& input)
-
-#define get_override(type) public:\
-	using Property<type>::operator type&;\
-	using Property<type>::operator();\
-	type& get()
-
-#define property(type, type1) class : public Property<type>\
-{\
-public:\
-	using Property<type>::operator=;\
-	using Property<type>::operator type&;\
-	using Property<type>::operator();\
-}
-
-#define readonly_property(type, type1) class : public Property<type>\
-{\
-protected:\
-	using Property<type>::operator=;\
-public:\
-	friend type1;\
-	using Property<type>::operator type&;\
-	using Property<type>::operator();\
-}
